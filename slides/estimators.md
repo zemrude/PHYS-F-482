@@ -1,5 +1,6 @@
 ---
 marp: true
+math: mathjax
 ---
 # PHYS-F-482: Advance techniques in experimental physics
 
@@ -35,5 +36,6 @@ We put a *hat* to say that this is an estimator. We sometimes called *estimator*
 
 Estimates of $\hat{\theta}(\vec{x})$ depend on the r.v. $\vec{x}$, therefore, estiamtes are also r.v. and they follow an specific *pdf* $g(\hat{\theta}; \theta)$ that generally depends on the true value $\theta$:
 
+![estimators](figs/estimators.png)
 
 
