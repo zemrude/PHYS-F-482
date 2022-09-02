@@ -38,4 +38,63 @@ Estimates of $\hat{\theta}(\vec{x})$ depend on the r.v. $\vec{x}$, therefore, es
 
 ![estimators](figs/estimators.png)
 
+* The **bias** of an estimator is defined as: $b = E[\hat{\theta}] - \theta$
+  * Average repeated measurements should tend to 0 bias
+* The **variance** is $V[\hat{\theta}] = E[\hat{\theta}^2]- (E[\hat{\theta}])^2$
+  * Small variance 
 
+---
+# Properties of Estimators
+Another measure of the quality of an estimator is called the *MSE* (Mean Squared error):
+$$MSE = E[(\hat{\theta}- \theta)^2] = E[(\hat{\theta} - E[\hat{\theta}])^2]+(E[\hat{\theta}-\theta])^2 = V[\hat{\theta}]-b^2$$
+
+:point_right: Small bias and variance are in general conflicting criteria. An estimator is called optimal if its bias is 0 and the variance minimal. 
+
+---
+# Example of estimator I
+
+* Parameter: $\mu = E[x]$
+
+* Estimator: $\hat{\mu} = \frac{1}{n}\sum_{i = 1}^n x_i \equiv \bar{x}$ 
+
+> **Bias**: $b = E[\hat{\mu}] - \mu = \frac{1}{n}E[x_1 + x_2 + ... + x_n] - \mu = \frac{1}{n}E[n\mu] -\mu = 0$ 
+> 
+> **Variance**: $V[\hat{\mu}] = V[\frac{1}{n}x_1 +  ... + \frac{1}{n}x_n] = \frac{1}{n^2}\left(V[x_1] +  ... + V[x_n]\right) = \frac{1}{n^2}(n\sigma^2) = \frac{\sigma^2}{n}$
+
+---
+# Example of estimator II
+
+* Parameter: $\sigma^2 = V[x]$
+* Estimator: $\hat{\sigma}^2 = \frac{1}{1 - n^2}\sum_{i = 1}^{n}(x_i - \bar{x})^2 \equiv s^2$
+
+> **Bias**: $E[\hat{\sigma}^2] - \sigma^2 = 0$ (the factor $n-1$ makes it possible)
+>
+> **Variance**: $V[\hat{\sigma}^2] = \frac{1}{n}(\mu_4 - \frac{n-3}{n-1}\mu_2),$ where $\mu_k = \int (x-\mu)^k f(x) {\rm d}x$
+
+--- 
+
+# The Likelihood Function
+Suppose a set of measurements $x_i$ each independent and identically distributed (i.i.d) ie, each follows a probability distribution $f(x;\vec{\theta})$ that depends on a set parameter $\vec{\theta}$. 
+
+If we evaluate the function with the data obtained and regard it as a function of the parameters $\vec{\theta}$ this is called the **likelihood funcion**:
+
+$$\mathcal{L}(\vec{\theta}) = f(\vec{x};\vec{\theta}) = \prod_{i=1}^n f(x_i;\vec{\theta})$$
+where $x_i$ are constants
+
+---
+
+# The Maximum Likelihood Method
+
+The likelihood function is a function of $\vec{\theta}$ if we choose a $\theta$ close to the true value, it is expected that the probabilities are high.  So we define the maximum likelihood (ML) estimators to be the parameters that maximize the likelihood. If the likelihood function is differentiable the estiamtors are given by:
+
+$$ \frac{\partial \mathcal{L}}{\partial \theta_i} = 0$$
+---
+# ML method: Example I
+
+Consider the decay time of a particle, which is given by the exponential pdf $f(t; \tau) = \frac{1}{\tau}e^{-{t/\tau}}$ where $\tau$ is the lifetime of the particle. 
+Imagine we have a set of measurements for different decays $t_1, ..., t_n$, the likelihood would be:
+$$\mathcal{L}(\tau) = \prod_{i =1 }^n \frac{1}{\tau}e^{-\frac{t_i}{\tau}}$$
+
+The value of $\tau$ for which $\mathcal{L}(\tau)$ is maximum also gives the maximum value of its logarithm (the log-likelihood function):
+
+$$\log \mathcal{L}(\tau) = \sum_{i =1 }^n \log \frac{1}{\tau}e^{-\frac{t_i}{\tau}} = \sum_{i =1 }^n \left(\log{\frac{1}{n}} - \frac{t_i}{\tau})$$
