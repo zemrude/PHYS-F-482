@@ -91,10 +91,53 @@ $$ \frac{\partial \mathcal{L}}{\partial \theta_i} = 0$$
 ---
 # ML method: Example I
 
-Consider the decay time of a particle, which is given by the exponential pdf $f(t; \tau) = \frac{1}{\tau}e^{-{t/\tau}}$ where $\tau$ is the lifetime of the particle. 
+Consider the decay time of a particle, which is given by the exponential *pdf* $f(t; \tau) = \frac{1}{\tau}e^{-{t/\tau}}$ where $\tau$ is the lifetime of the particle. 
 Imagine we have a set of measurements for different decays $t_1, ..., t_n$, the likelihood would be:
 $$\mathcal{L}(\tau) = \prod_{i =1 }^n \frac{1}{\tau}e^{-\frac{t_i}{\tau}}$$
 
 The value of $\tau$ for which $\mathcal{L}(\tau)$ is maximum also gives the maximum value of its logarithm (the log-likelihood function):
 
-$$\log \mathcal{L}(\tau) = \sum_{i =1 }^n \log \frac{1}{\tau}e^{-\frac{t_i}{\tau}} = \sum_{i =1 }^n \left(\log{\frac{1}{n}} - \frac{t_i}{\tau})$$
+$$\log \mathcal{L}(\tau)  = \sum_{i =1 }^n \log \frac{1}{\tau}e^{-\frac{t_i}{\tau}}  = \sum_{i =1 }^n \left(\log{\frac{1}{n}} - \frac{t_i}{\tau}\right)$$
+
+
+---
+
+# ML method: Example I
+
+Finding the maximum $\frac{\partial \log \mathcal{L}(\tau)}{\partial\tau} = 0$ gives:
+$$ \hat{\tau} = \frac{1}{n}\sum_{i=1}^n t_i$$
+
+
+```python
+%matplotlib inline
+import numpy as np
+import scipy as sp
+from scipy import special
+from scipy.stats import expon
+
+import matplotlib.pylab as plt
+
+from IPython.display import Markdown
+```
+---
+# ML method: Example I
+```python
+def exp(x, tau):
+    return 1/tau * np.exp(x/tau)
+tau  = 1.
+
+x = np.linspace(0, 10, 1000)
+y = exp(x, tau)
+
+nevents = 50
+data = np.random.exponential(tau, nevents)
+
+fig, ax = plt.subplots(figsize=(8,6)) 
+ax.scatter(data, np.zeros(nevents), s = 500, marker = '|') 
+ax.plot(x, expon(0,tau).pdf(x), lw=2, color="red")
+ax.set_xlim(0,5)
+ax.set_ylim(0,1)
+```
+---
+# ML method: Example I
+![tau_distribution](./figs/tau_distribution.png)
