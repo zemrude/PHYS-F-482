@@ -141,3 +141,60 @@ ax.set_ylim(0,1)
 ---
 # ML method: Example I
 ![tau_distribution](./figs/tau_distribution.png)
+```python
+tau_estimate =  1./nevents * np.sum(data)
+```
+Best estimate is $\hat{\tau} = 1.01$
+
+---
+# ML method: Example II
+Let's consider the case of a gaussian distribution:
+$$f(x;\mu, \sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}} e^{-(x-\mu)^2/2\sigma^2}$$
+If we have $x_1,...,x_n$ independent randon variables that follow the gaussian distribution,the log-likelihood is given by:
+$$\log \mathcal{L}(\mu, \sigma^2) = \sum_{i=1}^n \log f(x_i;\mu,\sigma^2) = \sum_{i=1}\left(\log\frac{1}{\sqrt{2\pi}}+ \frac{1}{2}\log\frac{1}{\sigma^2}- \frac{(x_i - \mu)^2}{2\sigma^2}\right)$$
+---
+# ML method: Example II
+Calculating the derivatives for $\mu$ and $\sigma^2$ we have:
+$$\hat{\mu} = \frac{1}{n}\sum_{i=1}^n x_i$$
+and
+$$\hat{\sigma^2}= \frac{1}{n}\sum_{i=1}^n(x_i- \mu)^2$$
+---
+# ML method: Example II
+* The estimator for $\mu$ is unbiased, but we find that $E[\hat{\sigma^2}] = \frac{n - 1}{n}\sigma^2$, so the ML estiamtor for $\sigma^2$ has a bias, that disappears when $n \rightarrow \infty$.
+* To have an unbiased estimator we can use:
+  $$ s^2 = \frac{1}{n - 1}\sum_{i=1}^n(x_i- \mu)^2$$
+---
+# Variance of Estimators
+Once we have defined the estimators, we want to report its _statistical error_. I.e., how widely the estimate will distribute if we repeat the measurement many times. We are going to see 4 methods:
+1. Analytical (when possible)
+2. Monte Carlo method
+3. Using the information inequality
+4. Graphical Method
+
+---
+
+# Variance of Estimators: Analytical 
+In some cases we can calculate the variance analytically. For example for the exponential distribution.
+* We found the estimator as:  $\hat{\tau} = \frac{1}{n}\sum_{i=1}^n t_i$
+* Variance is defined as: $V[\hat{\tau}] = E[\hat{\tau^2}] - (E[\hat{\tau}])^2$
+
+$$=\int...\int\left(\frac{1}{n}\sum_{i=1}^n t_i\right)^2\frac{1}{\tau}e^{-t_1/\tau}...\frac{1}{\tau}e^{-t_n/\tau} {\rm d}t_1...{\rm d}t_n - \left(\int...\int\left(\frac{1}{n}\sum_{i=1}^n t_i\right)\frac{1}{\tau}e^{-t_1/\tau}...\frac{1}{\tau}e^{-t_n/\tau} {\rm d}t_1...{\rm d}t_n\right)^2$$
+$$= \frac{\tau^2}{n}$$
+* Note that the variance depends on $\tau$ the __true value__. In practice we take $\hat{\tau}$ as the value for the variance.
+---
+# Variance of Estimators: Monte Carlo
+In several cases, we cannot calcualte the variance analytically. In those cases we can use a Monte Carlo method:
+
+```python
+nexperiments = 100
+tau_estimates = []
+for i in range(0, nexperiments):
+   data = np.random.exponential(tau, nevents)
+   tau_estimates.append(1./nevents * np.sum(data))
+```
+---
+# Variance of Estimators: Monte Carlo
+![](./figs/tau_estimate_distribution.png)
+
+
+
