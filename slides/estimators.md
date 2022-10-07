@@ -148,6 +148,7 @@ Best estimate is $\hat{\tau} = 1.01$
 
 ---
 # ML method: Example II
+
 Let's consider the case of a gaussian distribution:
 $$f(x;\mu, \sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}} e^{-(x-\mu)^2/2\sigma^2}$$
 If we have $x_1,...,x_n$ independent randon variables that follow the gaussian distribution,the log-likelihood is given by:
