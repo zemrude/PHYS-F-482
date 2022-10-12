@@ -155,17 +155,20 @@ If we have $x_1,...,x_n$ independent randon variables that follow the gaussian d
 $$\log \mathcal{L}(\mu, \sigma^2) = \sum_{i=1}^n \log f(x_i;\mu,\sigma^2) = \sum_{i=1}\left(\log\frac{1}{\sqrt{2\pi}}+ \frac{1}{2}\log\frac{1}{\sigma^2}- \frac{(x_i - \mu)^2}{2\sigma^2}\right)$$
 ---
 # ML method: Example II
+
 Calculating the derivatives for $\mu$ and $\sigma^2$ we have:
 $$\hat{\mu} = \frac{1}{n}\sum_{i=1}^n x_i$$
 and
 $$\hat{\sigma^2}= \frac{1}{n}\sum_{i=1}^n(x_i- \mu)^2$$
 ---
 # ML method: Example II
+
 * The estimator for $\mu$ is unbiased, but we find that $E[\hat{\sigma^2}] = \frac{n - 1}{n}\sigma^2$, so the ML estiamtor for $\sigma^2$ has a bias, that disappears when $n \rightarrow \infty$.
 * To have an unbiased estimator we can use:
   $$ s^2 = \frac{1}{n - 1}\sum_{i=1}^n(x_i- \mu)^2$$
 ---
 # Variance of Estimators
+
 Once we have defined the estimators, we want to report its _statistical error_. I.e., how widely the estimate will distribute if we repeat the measurement many times. We are going to see 4 methods:
 1. Analytical (when possible)
 2. Monte Carlo method
@@ -175,27 +178,107 @@ Once we have defined the estimators, we want to report its _statistical error_. 
 ---
 
 # Variance of Estimators: Analytical 
+
 In some cases we can calculate the variance analytically. For example for the exponential distribution.
 * We found the estimator as:  $\hat{\tau} = \frac{1}{n}\sum_{i=1}^n t_i$
 * Variance is defined as: $V[\hat{\tau}] = E[\hat{\tau^2}] - (E[\hat{\tau}])^2$
 
 $$=\int...\int\left(\frac{1}{n}\sum_{i=1}^n t_i\right)^2\frac{1}{\tau}e^{-t_1/\tau}...\frac{1}{\tau}e^{-t_n/\tau} {\rm d}t_1...{\rm d}t_n - \left(\int...\int\left(\frac{1}{n}\sum_{i=1}^n t_i\right)\frac{1}{\tau}e^{-t_1/\tau}...\frac{1}{\tau}e^{-t_n/\tau} {\rm d}t_1...{\rm d}t_n\right)^2$$
 $$= \frac{\tau^2}{n}$$
-* Note that the variance depends on $\tau$ the __true value__. In practice we take $\hat{\tau}$ as the value for the variance.
+* Note that the variance depends on $\tau$ the __true value__. In practice we take $\hat{\tau}$ as the value for the variance. In our example with 50 events we have:  $\hat{\sigma}_{\hat{\tau}} = \sqrt{V[\hat{\tau}]} = \sqrt{\hat{\tau}^2/n} = 0.15$
+
 ---
 # Variance of Estimators: Monte Carlo
+
 In several cases, we cannot calcualte the variance analytically. In those cases we can use a Monte Carlo method:
 
 ```python
 nexperiments = 100
 tau_estimates = []
 for i in range(0, nexperiments):
-   data = np.random.exponential(tau, nevents)
-   tau_estimates.append(1./nevents * np.sum(data))
+   data = np.random.exponential(tau_estimate, nevents)tau_estimates.append(1./nevents * np.sum(data))
 ```
+:point_right: Note that we used $\hat{\tau}$ to generate the pseudo-samples since we don't have access to the true $\tau$.
+
 ---
 # Variance of Estimators: Monte Carlo
 ![](./figs/tau_estimate_distribution.png)
 
+We obtained a standard deviation of $\hat{\sigma}_{\hat{\tau}} = 0.14$. 
+
+---
+# Variance of Estimators: The Rao-Cramer-Frechet Limit
+
+The _information inequality_ (RCF) sets a lower bound on the variance of any estimator:
+
+$$V[\hat{\theta}] \geq \frac{\left(1+\frac{\partial b}{\partial \theta}\right)^2}{E\left[-\frac{\partial^2 \log \mathcal{L}}{\partial \theta^2}\right]}$$
+This is the **Minimum Variance Bound**, where $b$ is the bias $(b = E[\hat{\theta} - \theta])$. For unbiased estimatos we have the Cramer-Rao bound:
+$$V[\hat{\theta}] \geq  \frac{1}{E\left[-\frac{\partial^2 \log \mathcal{L}}{\partial \theta^2}\right]} = \frac{1}{\mathcal{I}(\theta)}$$
+
+where $\mathcal{I}(\theta) = - E\left[\frac{\partial^2 \log \mathcal{L}}{\partial \theta^2}\right]$ is the **Fisher information**.
+
+---
+# Variance of Estimators: The Rao-Cramer-Frechet Limit
+
+For the case of more parameters $\vec{\theta} = (\theta_1,...\theta_n)$, the covariance matrix of their estimators, $V_{ij}$ is given by:
+$$(V^{-1})_{ij} = E\left[-\frac{\partial^2\log\mathcal{L}}{\partial\theta_i\partial\theta_j}\right] $$
+It is impractical, in many instances, to calculate the RCF bound instead we can estimate it as:
+
+$$(\widehat{V^{-1}})_{ij} = -\frac{\partial^2\log\mathcal{L}}{\partial\theta_i\partial\theta_j}\Bigr|_{\vec{\theta}=\hat{\vec{\theta}}} $$
+
+and for one parameter:
+
+$$\widehat{\sigma^2_{\hat{\theta}}} = \left(-1\Bigr/\frac{\partial^2\log\mathcal{L}}{\partial\theta^2}\right)\Bigr|_{\theta=\hat{\theta}} $$
 
 
+---
+
+# Variance of Estimators: The Graphic Method
+
+The graphic method is consists on evaluating the shape of the likelihood around its minuma (we saw this in BAC3 labs). For that we can expand in as Taylor expansion:
+
+$$\log {\mathcal{L}(\theta)} = \log {\mathcal{L}(\hat{\theta})} + \left[\frac{\partial \log \mathcal{L}}{\partial \theta}\right]_{\theta = \hat{\theta}}(\theta - \hat{\theta}) + \frac{1}{2}\left[\frac{\partial^2 \log \mathcal{L}}{\partial \theta^2}\right]_{\theta = \hat{\theta}}(\theta - \hat{\theta})^2 + ...$$
+By definition $\log {\mathcal{L}(\hat{\theta})} = \log \mathcal{L}_{max}$. Also the first derivative is 0, since it's evaluted at its maximum so:
+ $$ \log {\mathcal{L}(\theta)} = \log \mathcal{L}_{max} - \frac{(\theta - \hat{\theta})^2}{2 \widehat{\sigma_{\widehat{\theta}}^2}}$$
+or 
+  $$\log \mathcal{L}(\theta \pm \widehat{\sigma_{\hat{\theta}}}) =\log \mathcal{L}_{max} - \frac{1}{2}$$ 
+---
+# Variance of Estimators: The Graphic Method
+
+![](./figs/tau_variance_graph.png) 
+In this case: $\Delta \hat{\tau}_+ = 0.16$ and  $\Delta \hat{\tau}_- = 0.14 \rightarrow \hat{\sigma}_{\hat{\tau}} \approx 0.15$
+
+---
+
+# Variance of Estimators: Gaussian approximation
+The M.L. estimate, $\hat{\theta}$, depends on randomly distributed variables, $x_1,...,x_n$, therefore it also a *random variable*. Since it depends on a large number of random variables, the **Central Limit Theorem** says that $\hat{\theta}$ should follow a gaussian distribution with the true, $\theta$, as central value:
+$$\mathcal{L}(\hat{\theta})=\frac{1}{\sqrt{2\pi\sigma^2_\hat{\theta}}}e^{-\frac{1}{2}\frac{(\theta-\hat{\theta})^2}{\sigma^2_\hat{\theta}}}$$
+or in $\log$:
+
+$$\log \mathcal{L}(\hat{\theta})= -\frac{1}{2}\frac{(\theta-\hat{\theta})^2}{\sigma^2_\hat{\theta}} - \frac{1}{2}\log(2\pi\sigma^2_\hat{\theta}) $$
+
+which is similar to the result we obteined with the Taylor expansion.
+
+---
+
+# Variance of Estimators: Two correlated estimates
+
+If we have different estimates, $\hat{\theta}_1, \hat{\theta}_2$ that are correlated. For large $n$, the likelihood takes the gaussian approximation:
+
+$$\log \mathcal{L}(\hat{\theta}_1, \hat{\theta}_2) \approx \frac{1}{\sqrt{1-\rho^2}} \frac{1}{2\pi\sqrt{\sigma^2_\hat{\theta_1}\sigma^2_\hat{\theta_2}}}e^{-\frac{1}{2(1-\rho^2)}\frac{(\theta_1-\hat{\theta}_1)^2}{\sigma^2_\hat{\theta_1}}\frac{(\theta_2-\hat{\theta_2})^2}{\sigma^2_\hat{\theta_2}}-2\rho\frac{(\theta_1-\hat{\theta}_1)}{\sigma_\hat{\theta_1}}\frac{(\theta_2-\hat{\theta}_2)}{\sigma_\hat{\theta_1}}}$$
+
+The $\log \mathcal{L}$ then takes a quadratic form near maximum which is a paraboloid centered at $\hat{\theta}_1, \hat{\theta}_2$ in the $\theta_1, \theta_2$ space. 
+
+---
+# Variance of Estimators: Two correlated estimates
+The contour $\log \mathcal{L} (\hat{\theta}_1, \hat{\theta}_2) = \log \mathcal{L}_{max} - 1/2$ is an ellipse:
+
+![](./figs/2D_likelihood.png)
+
+---
+
+# Variance of Estimators: Two correlated estimates
+The angle of the ellipse, $\phi$ is given by:
+$$\tan 2\phi = \frac{2\rho\hat{\sigma}_{\theta_1}\hat{\sigma}_{\theta_2}}{\hat{\sigma}^2_{\theta_1} - \hat{\sigma}^2_{\theta_1}}$$
+
+Correlations between estimators result in an increase of their standard deviations. 
