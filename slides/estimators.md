@@ -282,3 +282,128 @@ The angle of the ellipse, $\phi$ is given by:
 $$\tan 2\phi = \frac{2\rho\hat{\sigma}_{\theta_1}\hat{\sigma}_{\theta_2}}{\hat{\sigma}^2_{\theta_1} - \hat{\sigma}^2_{\theta_1}}$$
 
 Correlations between estimators result in an increase of their standard deviations. 
+
+---
+
+# Extended Maximum Likelihood Method
+Sometimes the total number of events in a sample is a fixed number, sometimes, $n$ is also a random variable. 
+
+> Example 1: For the muon life time, you can decide to run you experiment until you always get $n$ number of triggers, since you only care about the $\Delta t$. 
+> Example 2: You look for a rare physics event (like a desintegration) and you measure the number of events $n$ in fixed time window.
+
+---
+
+# Extended Maximum Likelihood Method
+
+In this cases, $n$ will be often a Poisson random variable with mean $\nu$. The results of an experiment will be: $n$, $x_1$, ... $x_n$.
+
+The extended likelihood is defined as:
+
+$$\mathcal{L}(n, \vec{\theta}) = \frac{\nu^n}{n!}e^{-\nu}
+\prod_{i=1}^nf(x_i;\vec{\theta})$$
+
+We have now 2 options:
+1. The expected number of events denpends on the unknown parameters $\vec{\theta}$, i.e. $\nu = \nu(\vec{\theta})$.
+2. The two, $\nu$ and $\vec{\theta}$ are independent.
+
+---
+# Extended Maximum Likelihood Method
+Suppose theory gived $\nu = \nu(\vec{\theta})$ then the log-likelihood can be written as:
+$$\log {\mathcal{L}(\vec{\theta})} = -\nu(\vec{\theta}) + \sum_{i=1}^n \log (\nu(\vec{\theta})f(x_i;\vec{\theta})) + C $$
+
+> Example: A process where the number of events depends on the cross-section $\sigma(\vec{\theta})$ predicted as function of the parameters of the theory, $\vec{\theta}$ that also dictate the shape of the distribution of events $x_i$.
+
+
+---
+
+# Extended Maximum Likelihood Method
+
+In case $\nu$ and $\vec{\theta}$ are independent we can find the estimator $\widehat{\vec{\theta}}$ by maximizing ($\partial/\partial\vec{\theta}$):
+
+$$\log {\mathcal{L}(\vec{\theta})} = n\log \nu -\nu + \sum_{i=1}^n \log f(x_i;\vec{\theta}) + C $$
+
+likewhise the estimator $\hat{\nu}$ can be find by maximizing over $\nu$:
+$$\frac{\partial \log {\mathcal{L}(\vec{\theta})}}{\partial \nu} = 0 = \frac{n}{\nu} - 1 \rightarrow \hat
+{\nu} = n$$ 
+---
+# Extended Maximum Likelihood: Example
+Let's assume a sample mixed with two types of events, a signal that follows a known distribution $f_s(x)$ and background events distributed as $f_b(x)$. We defined:
+* signal fraction $= \theta$.
+* expected number of events $= \nu$.
+* observed number of events $= n$.
+* expected number of signal events $\mu_s= \theta \nu$
+* expected number of background events $\mu_b = (1-\theta)\nu$
+
+The goal is to estimate $\mu_s$ and $\mu_b$. The overall dsitribution of events can be defined as:
+
+$$f(x; \mu_s, \mu_b) = \frac{\mu_s}{\mu_s + \mu_b}f_s(x)+\frac{\mu_b}{\mu_s + \mu_b}f_b(x)$$
+
+---
+# Extended Maximum Likelihood: Example
+The observed number of events will follow a Poisson distribution as:
+$$P(n; \mu_s\mu_b) = \frac{(\mu_s + \mu_b)^n}{n!}e^{-(\mu_s + \mu_b)}$$
+The likelihood can be written as:
+
+$$\log \mathcal{L}(\mu_s,\mu_b) = - (\mu_s + \mu_b) +\sum_{i= 1}^n\log[(\mu_s + \mu_b)f(x_i;\mu_s, \mu_b)]$$
+
+which becomes:
+
+$$\log \mathcal{L}(\mu_s,\mu_b) = - (\mu_s + \mu_b) +\sum_{i= 1}^n\log[\mu_s f_s(x_i) + \mu_b f_b(x_i)]$$
+
+
+
+---
+
+# Extended Maximum Likelihood: Example
+
+Let's generate a sample of with defined distributions for background and signal
+```python
+tau = 3
+bg_events = 200
+background = np.random.exponential(tau, bg_events)
+sig_events = 50
+mu = 1.5
+sigma = 0.1
+signal = np.random.normal(mu, sigma, sig_events)
+
+ntotal = bg_events + sig_events
+from argparse import Namespace
+truth = Namespace(mu_s = sig_events, mu_b = bg_events)
+
+print (truth)
+```
+We have a true values $\mu_s =50$ and $\mu_b = 200$.
+
+---
+
+# Extended Maximum Likelihood: Example
+
+We can plot the sample and the distributions as:
+
+![](figs/sig_background_distribution.png)
+
+---
+# Extended Maximum Likelihood: Example
+
+We can now define the $-\log{\mathcal{L}}$ and find its minima:
+
+```python
+
+def likelihood(mu_s, mu_b):
+    values = np.log(mu_s * norm(mu, sigma).pdf(sample) + mu_b * expon(0, tau).pdf(sample))
+    return (mu_s + mu_b) - np.sum(values)
+```
+
+---
+# Extended Maximum Likelihood: Example
+
+For one specific MC sample we find the best estimates:
+![](./figs/sig_background_bestfit.png)
+
+$\hat{\mu_s} = 44.15, \hat{\mu_b} =207.7$ with errors given by the countours. 
+
+---
+# Extended Maximum Likelihood: Example
+
+* Sometimes a downgoing fluctuation of the background in the signal region can result in a *negative* signal estimate $\hat{\mu_s}$. 
+* We can let that happen as long as the total *pdf* $f(x; \hat{\mu_s}, \hat{\mu_b}) > 0$, i.e. remains positive everywhere.
