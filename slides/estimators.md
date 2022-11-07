@@ -359,20 +359,22 @@ $$\log \mathcal{L}(\mu_s,\mu_b) = - (\mu_s + \mu_b) +\sum_{i= 1}^n\log[\mu_s f_s
 Let's generate a sample of with defined distributions for background and signal
 ```python
 tau = 3
-bg_events = 200
+bg_events = 100
 background = np.random.exponential(tau, bg_events)
-sig_events = 50
+sig_events = 7
 mu = 1.5
 sigma = 0.1
 signal = np.random.normal(mu, sigma, sig_events)
 
 ntotal = bg_events + sig_events
+
 from argparse import Namespace
+
 truth = Namespace(mu_s = sig_events, mu_b = bg_events)
 
 print (truth)
 ```
-We have a true values $\mu_s =50$ and $\mu_b = 200$.
+We have a true values $\mu_s = 7$ and $\mu_b = 100$.
 
 ---
 
@@ -400,10 +402,31 @@ def likelihood(mu_s, mu_b):
 For one specific MC sample we find the best estimates:
 ![](./figs/sig_background_bestfit.png)
 
-$\hat{\mu_s} = 44.15, \hat{\mu_b} =207.7$ with errors given by the countours. 
+$\hat{\mu}_s = 6.9, \hat{\mu}_b =101.3$ with errors given by the countours. 
 
 ---
 # Extended Maximum Likelihood: Example
 
-* Sometimes a downgoing fluctuation of the background in the signal region can result in a *negative* signal estimate $\hat{\mu_s}$. 
-* We can let that happen as long as the total *pdf* $f(x; \hat{\mu_s}, \hat{\mu_b}) > 0$, i.e. remains positive everywhere.
+* Sometimes a downgoing fluctuation of the background in the signal region can result in a *negative* signal estimate $\hat{\mu}_s$. 
+* We can let that happen as long as the total *pdf* $f(x; \hat{\mu}_s, \hat{\mu}_b) > 0$, i.e. remains positive everywhere.
+![](/figs/estimate_distribution_negvalues.png)
+
+---
+
+# Binned Maximum Likelihood
+* When data is large, using the individual events might be very CPU consuming. In this case it is better to use histrograms. 
+* The number if events in the bin-$i$ based on the unknown parameters, $\vec{\theta}$ is:
+  $$\nu(\vec{\theta})_i = n_{tot}\int_{x^i_{min}}^{x^i_{max}}f(x;\vec{\theta}){\rm d}x$$ 
+  where $x^i_{min}$, $x^i_{max}$ are the limits of the bin. 
+* So we have a vector $\vec{\nu}=(\nu_1,... \nu_N)$ of $N$ bins of expected values per fin, plus a vector $\vec{n} = (n_1, ... n_N)$ of measured content per bin
+ 
+---
+
+# Binned Maximum Likelihood II
+
+* We can model data as a multinominal distribution:
+  $$ f(\vec{n}, \vec{\nu}) = \frac{n_{tot}!}{n_1!... n_N!}\left(\frac{\nu_1}{n_{tot}}\right)^{n_1} ...\left(\frac{\nu_N}{n_{tot}}\right)^{n_N}$$
+* where the probability of falling in a bin is given by $\nu_i/n_{tot}$. 
+* The log-likelihood is given by:
+  $$ \log \mathcal{L}(\vec{\theta}) = \sum_{i=1}^N n_i\log \nu_i(\vec{\theta}) + C $$
+  
