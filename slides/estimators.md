@@ -1,6 +1,8 @@
 ---
 marp: true
 math: mathjax
+paginate: true
+
 ---
 # PHYS-F-482: Advance techniques in experimental physics
 
@@ -14,7 +16,9 @@ Juan A. Aguilar
 * Propierties
 * Examples of estimators
 * Likelihood method
-* ...
+* Variance of Estimators
+* Extended Likelihood method
+* Binned Lielihood method
   
 ---
 
@@ -65,7 +69,7 @@ $$MSE = E[(\hat{\theta}- \theta)^2] = E[(\hat{\theta} - E[\hat{\theta}])^2]+(E[\
 # Example of estimator II
 
 * Parameter: $\sigma^2 = V[x]$
-* Estimator: $\hat{\sigma}^2 = \frac{1}{1 - n^2}\sum_{i = 1}^{n}(x_i - \bar{x})^2 \equiv s^2$
+* Estimator: $\hat{\sigma}^2 = \frac{1}{(n - 1)}\sum_{i = 1}^{n}(x_i - \bar{x})^2 \equiv s^2$
 
 > **Bias**: $E[\hat{\sigma}^2] - \sigma^2 = 0$ (the factor $n-1$ makes it possible)
 >
@@ -429,4 +433,3 @@ $\hat{\mu}_s = 6.9, \hat{\mu}_b =101.3$ with errors given by the countours.
 * where the probability of falling in a bin is given by $\nu_i/n_{tot}$. 
 * The log-likelihood is given by:
   $$ \log \mathcal{L}(\vec{\theta}) = \sum_{i=1}^N n_i\log \nu_i(\vec{\theta}) + C $$
-  
