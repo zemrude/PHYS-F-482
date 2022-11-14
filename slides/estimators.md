@@ -7,13 +7,15 @@ paginate: true
 # PHYS-F-482: Advance techniques in experimental physics
 
 ## Theory of Estimators 
-Juan A. Aguilar 
+Juan A. Aguilar, Pascal Vanlaer 
+
+(Based on G. Cowan's lectures)
 
 ---
 
 # Table of Content
 * Introduction of estimator
-* Propierties
+* Properties
 * Examples of estimators
 * Likelihood method
 * Variance of Estimators
@@ -326,7 +328,7 @@ In case $\nu$ and $\vec{\theta}$ are independent we can find the estimator $\wid
 
 $$\log {\mathcal{L}(\vec{\theta})} = n\log \nu -\nu + \sum_{i=1}^n \log f(x_i;\vec{\theta}) + C $$
 
-likewhise the estimator $\hat{\nu}$ can be find by maximizing over $\nu$:
+likewise the estimator $\hat{\nu}$ can be find by maximizing over $\nu$:
 $$\frac{\partial \log {\mathcal{L}(\vec{\theta})}}{\partial \nu} = 0 = \frac{n}{\nu} - 1 \rightarrow \hat
 {\nu} = n$$ 
 ---
@@ -345,7 +347,7 @@ $$f(x; \mu_s, \mu_b) = \frac{\mu_s}{\mu_s + \mu_b}f_s(x)+\frac{\mu_b}{\mu_s + \m
 ---
 # Extended Maximum Likelihood: Example
 The observed number of events will follow a Poisson distribution as:
-$$P(n; \mu_s\mu_b) = \frac{(\mu_s + \mu_b)^n}{n!}e^{-(\mu_s + \mu_b)}$$
+$$P(n; \mu_s,\mu_b) = \frac{(\mu_s + \mu_b)^n}{n!}e^{-(\mu_s + \mu_b)}$$
 The likelihood can be written as:
 
 $$\log \mathcal{L}(\mu_s,\mu_b) = - (\mu_s + \mu_b) +\sum_{i= 1}^n\log[(\mu_s + \mu_b)f(x_i;\mu_s, \mu_b)]$$
@@ -413,7 +415,8 @@ $\hat{\mu}_s = 6.9, \hat{\mu}_b =101.3$ with errors given by the countours.
 
 * Sometimes a downgoing fluctuation of the background in the signal region can result in a *negative* signal estimate $\hat{\mu}_s$. 
 * We can let that happen as long as the total *pdf* $f(x; \hat{\mu}_s, \hat{\mu}_b) > 0$, i.e. remains positive everywhere.
-![](/figs/estimate_distribution_negvalues.png)
+![](./figs/estimate_distribution_negvalues.png)
+
 
 ---
 
@@ -433,3 +436,51 @@ $\hat{\mu}_s = 6.9, \hat{\mu}_b =101.3$ with errors given by the countours.
 * where the probability of falling in a bin is given by $\nu_i/n_{tot}$. 
 * The log-likelihood is given by:
   $$ \log \mathcal{L}(\vec{\theta}) = \sum_{i=1}^N n_i\log \nu_i(\vec{\theta}) + C $$
+
+---
+
+# Binned Maximum Likelihood III
+
+Same example as before. 
+
+```python
+content, bins, patches = ax.hist(data, bins=np.linspace(0, 5, 10)) 
+ax.plot(x, nevents*(bins[1] - bins[0])*expon(0,tau).pdf(x), lw=2, color="red")
+ax.set_xlim(0,5)
+ax.set_xlabel("$t$")
+ax.set_ylabel("$y$")
+```
+![](./figs/tau_distribution_hits.png)
+
+---
+
+# Binned Maximum Likelihood III
+
+```python
+
+def binllh(tau):
+    nus = np.array([ nevents * (expon(0, tau).cdf(bins[i+1]) 
+    - expon(0, tau).cdf(bins[i])) for i,b in enumerate(bins[:-1])])
+    values = np.sum(content * np.log(nus))
+    return values
+
+```
+
+* Doing the unbinned estimator we find: $\hat{\tau} = 0.99$
+
+* Doing with a binned data: $\hat{\tau} = 0.98$
+
+In the limit of very small bins, we usually recover the unbinned likelihood. 
+
+---
+
+# Summary
+
+We have seen:
+* Estimators and its properties (consistent, unbias and efficient)
+* Maximum Likelihood estimates
+* Variance of Estimators:
+  *   Analytical, Monte Carlo, Graphical, Cramer-Rao,..
+* Extendended Likihood
+* Binned Likelihood method
+ 
