@@ -291,6 +291,19 @@ Correlations between estimators result in an increase of their standard deviatio
 
 ---
 
+# Functions of ML estimators
+
+Let's come back to the decay of a particle, imagine we wrote it as function of the decay constant $\lambda = \frac{1}{\tau}$:
+$$f(t;\lambda) = \lambda e^{-\lambda t}$$
+
+* The ML estimator of a function is simply $\hat{\alpha}(\theta) = \alpha(\hat{\theta})$ in this case:
+  $$ \hat{\lambda} = \frac{n}{\sum_{i=1}^n t_i}$$
+* There is a caveat: $\hat{\lambda}$ is biased:
+  $$ E[\hat{\lambda}]= \lambda \frac{n}{n-1}$$ 
+  (bias goes to 0 when $n\rightarrow \infty$)
+
+---
+
 # Extended Maximum Likelihood Method
 Sometimes the total number of events in a sample is a fixed number, sometimes, $n$ is also a random variable. 
 
@@ -471,6 +484,42 @@ def binllh(tau):
 * Doing with a binned data: $\hat{\tau} = 0.98$
 
 In the limit of very small bins, we usually recover the unbinned likelihood. 
+
+---
+
+# Relation of ML and $\chi^2$
+
+If the parameters, (measurements) are correlated, in the large sample limit the likelihood function is a n-dimensional Gaussian with covariance $V$
+
+$$\mathcal{L}(\hat{\vec{\theta}};\vec{\theta}, V)= \frac{1}{(2\pi)^{N/2}|V|^{1/2}}e^{[-\frac{1}{2}(\hat{\vec{\theta}} - \vec{\theta})^TV^{-1}(\hat{\vec{\theta}} - \vec{\theta})]}$$
+
+The loglikelihood becomes:
+$$\log \mathcal{L}(\hat{\vec{\theta}}) = -\frac{1}{2}\sum_{i,j = 1}^N [-\frac{1}{2}(\hat{{\theta}_i} - {\theta}_i)^T (V^{-1})_{ij}(\hat{{\theta}_j} - {\theta}_j)] + {\rm cte}$$
+Which maximizes when we minimize:
+$$ \chi^2(\vec{\theta}) = \sum_{i,j = 1}^N (\hat{{\theta}_i} - {\theta}_i)^T (V^{-1})_{ij}(\hat{{\theta}_j} - {\theta}_j) $$
+
+---
+# Relation of ML and $\chi^2$
+If the covariance is diagonal, ie, the parameters are not correlated:
+
+$$\chi^2(\vec{\theta}) = \sum_{i}^N \frac{(\hat{\theta}_i - \theta_i)^2}{\sigma^2_{\theta_i}} $$
+
+* The parameters $\hat{\theta}_i$ that minimize this equation are called **Least Squared** (LS) estimators.  
+
+*  If $\hat{\theta}_i$ are gaussian distributed, the value of $\chi^2_{min}$ is also a random variable of addition of gaussian numbers which follows the $\chi^2$ distribution, $f_{\chi^2}(\chi^2;n_d)$.
+*  $n_d$ is the degrees of freedom:
+  $$ n_d = \rm{number\; of\; point} - \rm{number\; of\; fitted\;parameters} $$
+
+---
+
+# LS and Goodness-of-fit
+
+* The expectatino value of $f_{\chi^2}(\chi^2,n_d)$ is $n_d$. So if $\chi^2_{min} \approx n_d$ we say the fit is good.
+* More correctly we need to calculate the $p$-value:
+  $$ p = \int_{\chi^2_{min}}^{\infty}f_{\chi^2}(t;n_d){\rm d}t$$
+
+* This is the probability of obtaining a $\chi^2_{min}$ as high as the one we got, or higher, if the hypothesis is correct.
+  
 
 ---
 
