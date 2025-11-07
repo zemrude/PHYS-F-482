@@ -318,6 +318,7 @@ $$\widehat{\sigma^2}= \frac{1}{n}\sum_{i=1}^n(x_i- \mu)^2$$
 
 Let's come back to the decay of a particle, imagine we wrote it as function of the decay constant $\lambda = \frac{1}{\tau}$:
 $$f(t;\lambda) = \lambda e^{-\lambda t}$$
+
 * The ML estimator of a function is simply $\hat{\alpha}(\theta) = \alpha(\hat{\theta})$ in this case:
   $$ \hat{\lambda} = \frac{n}{\sum_{i=1}^n t_i}$$
 
@@ -551,10 +552,10 @@ class angle_dist(rv_continuous):
 
 generator = angle_dist(0.5, 0.5, 0, -1, 1)
 
-data = generator.rvs(size=1000)
+data_angles = generator.rvs(size=1000)
 fig, ax = plt.subplots(figsize=(4,4)) 
 
-ax.hist(data)
+ax.hist(data_angles)
 ax.set_xlim(-1,1)
 ax.set_xlabel(r"$\cos(\theta)$")
 plt.show()
@@ -570,7 +571,7 @@ def UnbinnedNLL(data: np.array, args: tuple) -> float:
 import iminuit
 
 def funcU(args: tuple) -> float:
-    return UnbinnedNLL(data, tuple(args))
+    return UnbinnedNLL(data_angles, tuple(args))
 
 m = iminuit.Minuit(funcU, (0.5,0.5), name=("α","β"))
 m.errordef = iminuit.Minuit.LIKELIHOOD #This tells iminuit that the cost function is a negative log-likelihood    
@@ -584,7 +585,7 @@ beta_grid = np.linspace(0, 1, 100)
 for alpha in alpha_grid:
     La = []
     for beta in beta_grid:
-        La.append(UnbinnedNLL(data, (alpha, beta)))
+        La.append(UnbinnedNLL(data_angles, (alpha, beta)))
     L.append(La)
 
 L = np.array(L)
@@ -594,9 +595,6 @@ from argparse import Namespace
 fitted_scan = Namespace(alpha = alpha_grid[i_best[0]], beta = beta_grid[i_best[1]])
 fitted = Namespace(alpha = m.values[0], beta = m.values[1])
 
-#print (m.values)
-#print (m.covariance[0,1])
-#print (m.covariance[1,0])
 
 ```
 :::
@@ -732,11 +730,9 @@ A process where the number of events depends on the cross-section $\sigma_{xs}(\
 
 ## Extended Maximum Likelihood  {.smaller}
 
-In case $\nu$ and $\vec{\theta}$ are independent we can find the estimator $\widehat{\vec{\theta}}$ by maximizing ($\partial/\partial\vec{\theta}$):
+In case $\nu$ and $\vec{\theta}$ are independent we can find the estimator $\widehat{\vec{\theta}}$ by maximizing the likelihood:
 
-$$\ln {\mathcal{L}(\vec{\theta})} = n\ln \nu -\nu + \sum_{i=1}^n \ln f(x_i;\vec{\theta}) + C $$
-
-$$\frac{\partial \ln {\mathcal{L}(\vec{\theta})}}{\partial \theta_i}\Bigr|_{\theta_i = \hat{\theta}_i} = 0$$
+$$\ln {\mathcal{L}(\vec{\theta})} = n\ln \nu -\nu + \sum_{i=1}^n \ln f(x_i;\vec{\theta}) + C \rightarrow \frac{\partial \ln {\mathcal{L}(\vec{\theta})}}{\partial \theta_i}\Bigr|_{\theta_i = \hat{\theta}_i} = 0$$
 
 likewise the estimator $\hat{\nu}$ can be find by maximizing over $\nu$:
 $$\frac{\partial \ln {\mathcal{L}(\vec{\theta})}}{\partial \nu} \Bigr|_{\nu = \hat{\nu}} = 0 = \frac{n}{\hat{\nu}} - 1 \rightarrow \hat
@@ -779,16 +775,15 @@ Let's generate a sample of with defined distributions for background and signal
 from argparse import Namespace
 
 truth = Namespace(mu_s = 30, mu_b = 100, tau = 3, mu = 1.5, sigma = 0.1)
-bg_events = np.random.poisson(truth.mu_s)
+# Generate a poisson random number of background events
+bg_events = np.random.poisson(truth.mu_b)
 background = np.random.exponential(truth.tau, bg_events)
-sig_events = np.random.poisson(truth.mu_b)
-mu = 1.5
-sigma = 0.1
+
+# Generate a poisson random number of signal events events
+sig_events = np.random.poisson(truth.mu_s)
 signal = np.random.normal(truth.mu, truth.sigma, sig_events)
 
 ntotal = len(signal)+len(background)
-print(ntotal)
-
 
 print (truth)
 ```
@@ -808,16 +803,18 @@ fig, ax = plt.subplots(figsize=(6,4))
 
 sample = np.concatenate([background, signal])
 ax.scatter(sample, 
-np.zeros(bg_events + sig_events), 
+        np.zeros(bg_events + sig_events), 
         s = 500, marker = '|') 
-ax.plot(x, truth.mu_b*expon(0,truth.tau).pdf(x), 
+ax.plot(x, truth.mu_b * 
+        expon(0,truth.tau).pdf(x), 
         lw=2, linestyle=":", color="black")
-ax.plot(x, truth.mu_s*norm(truth.mu, truth.sigma).pdf(x), 
+ax.plot(x, truth.mu_s * 
+        norm(truth.mu, truth.sigma).pdf(x), 
         lw=2, color="blue")
 ax.plot(x, truth.mu_b * expon(0,truth.tau).pdf(x) 
-        + truth.mu_s*norm(truth.mu, truth.sigma).pdf(x), 
+        + truth.mu_s * 
+        norm(truth.mu, truth.sigma).pdf(x), 
         lw=2, color="black")
-
 ax.set_xlim(0,3)
 ax.set_ylim(0,ntotal)
 ax.set_xlabel("$x$")
@@ -838,14 +835,19 @@ def likelihood(mu_s, mu_b, sample):
           + mu_b * expon(0, truth.tau).pdf(sample)>0)
     return (mu_s + mu_b) - np.sum(values)
 ```
+:::{.callout-note}
+We are assuming that we know the true parameters for the gaussian and background, the only unknowns are the amount of signal and background events in the sample, ie $\mu_s, \mu_b$.
+:::
 
 ## Extended Maximum Likelihood {.smaller}
+
+Now we are scan the likelihood function and find its minimum. 
 
 ```{python}
 #| echo: true 
 L = []
-mu_s_grid = np.linspace(0, 100, 40)
-mu_b_grid = np.linspace(0, 300, 40)
+mu_s_grid = np.linspace(-10, 100, 40)
+mu_b_grid = np.linspace(-10, 300, 40)
 
 for mus in mu_s_grid:
     Ls = []
@@ -855,10 +857,9 @@ for mus in mu_s_grid:
 
 L = np.array(L)
 i_best = np.where(L == L.min())
-print (i_best)
-fitted = Namespace(mu_s = mu_s_grid[i_best[0]], mu_b = mu_b_grid[i_best[1]])
-print (f"Signal estimate {fitted.mu_s}")
-print (f"Background estimate {fitted.mu_b}")
+fitted_ext = Namespace(mu_s = np.float64(mu_s_grid[i_best[0]]), mu_b = np.float64(mu_b_grid[i_best[1]]))
+print (f"Signal estimate: {fitted_ext.mu_s:.2f}")
+print (f"Background estimate: {fitted_ext.mu_b:.2f}")
 ```
 
 ## Extended Maximum Likelihood {.smaller}
@@ -870,19 +871,19 @@ import matplotlib.colors as colors
 fig1, ax1 = plt.subplots(figsize=(5,5))
 mesh = ax1.pcolormesh(mu_b_grid, mu_s_grid, L, 
     shading="auto", vmin = L.min(), 
-    vmax = L.min()+1000)
+    vmax = L.min() + 50)
 cs = ax1.contour(mu_b_grid, mu_s_grid, L, 
     [L.min() + 0.5, L.min() + 4./2., L.min() 
-    + 9./2.],colors='white')
+    + 9./2.], colors='white')
 fmt = {}
 strs = ['1$\sigma$', '2$\sigma$', '3$\sigma$']
 for l, s in zip(cs.levels, strs):
     fmt[l] = s
 plt.clabel(cs, cs.levels, inline=1, 
     fmt=fmt, fontsize=20)
-plt.scatter(fitted.mu_b, fitted.mu_s, 
+plt.scatter(fitted_ext.mu_b, fitted_ext.mu_s, 100,
     marker='o',color='w', label="Estimated")
-plt.scatter(truth.mu_b, truth.mu_s, 
+plt.scatter(truth.mu_b, truth.mu_s, 100,
     marker='+',color='r', label="Truth")
 cbar = plt.colorbar(mesh)
 cbar.ax.set_ylabel('-$\ln \mathcal{L}$')
@@ -898,23 +899,23 @@ plt.ylim(0, 50)
 
 * Sometimes a downward fluctuation of the background in the signal region can result in a *negative* signal estimate $\hat{\mu}_s$. 
 * We can let that happen as long as the total *pdf* $f(x; \hat{\mu}_s, \hat{\mu}_b) > 0$, i.e. remains positive everywhere. 
-* Example made with $\mu_s$ = 2.5
+* The following is plot of estimates of $\hat{\mu}_s$ done for a true $\mu_s$ = 2.5. As can be seen in many instances the estimate is negative (We will see more on this when discussing confidence intervals)
 
 ![](./figs/estimate_distribution_negvalues.png){fig-align="center"}
 
  
 ## Binned Maximum Likelihood {.smaller}
 * When data is large, using the individual events might be very CPU consuming. In this case it is better to use histrograms. 
-* The number of events in the bin-$i$ based on the unknown parameters, $\vec{\theta}$ is:
+* The number of events in the bin-$i$ based on the unknown parameters, $\vec{\theta}$ is then defined as:
   $$\nu(\vec{\theta})_i = n_{tot}\int_{x^i_{min}}^{x^i_{max}}f(x;\vec{\theta}){\rm d}x$$ 
-  where $x^i_{min}$, $x^i_{max}$ are the limits of the bin. 
-* So we have a vector $\vec{\nu}=(\nu_1,... \nu_N)$ of $N$ bins of expected values per fin, plus a vector $\vec{n} = (n_1, ... n_N)$ of measured content per bin
+  where $x^i_{min}$, $x^i_{max}$ are the limits of the bin-$i$. 
+* We have now a vector $\vec{\nu}=(\nu_1,... \nu_N)$ of $N$ bins of expected values per bin, plus a vector $\vec{n} = (n_1, ... n_N)$ as our data given by the measured content per bin.
  
  
 
 ## Binned Maximum Likelihood {.smaller}
 
-We can model data as a multinominal distribution:
+We can model density probability function of our data as a multinominal distribution:
   $$ f(\vec{n}, \vec{\nu}) = \frac{n_{tot}!}{n_1!... n_N!}\left(\frac{\nu_1}{n_{tot}}\right)^{n_1} ...\left(\frac{\nu_N}{n_{tot}}\right)^{n_N}$$
 where the probability of falling in a bin $i$, is given by $\nu_i/n_{tot}$. 
 
@@ -927,12 +928,14 @@ In the limit of $n_{tot}\rightarrow \infty$ the multinominal distribution become
 
 ## Binned Maximum Likelihood {.smaller}
 
-Let's go back to the decay of a particle.
+:::{.callout title="Example"}
+Let's go back to the decay of a particle, where we are going to binned our data in 5 bins. 
+:::
 
 ```{python}
 #| echo: true
 #| output-location: column
-fig, ax = plt.subplots(figsize=(6,5)) 
+fig, ax = plt.subplots(figsize=(4,4)) 
 
 content, bins, patches = ax.hist(decay_data, 
     bins=np.linspace(0, 5, 10)) 
@@ -962,17 +965,18 @@ tau_grid = np.linspace(0.8, 1.2, 100)
 L = []
 for tt in tau_grid:
   L.append(binllh(tt))
-
 L = np.array(L)
 i_best = np.where(L == L.max())
-fig, ax = plt.subplots(figsize=(6,5))
+fig, ax = plt.subplots(figsize=(4,4))
 ax.plot(tau_grid, L)
 ax.axvline(x = tau_grid[i_best], 
-    color='k', linestyle=":")
+    color='k', linestyle=":", 
+    label=r"$\hat{\tau}$ = "+f"{tau_grid[i_best][0]:.2f}")
 ax.set_xlabel(r"$\tau$")
 ax.set_ylabel("-$\ln \mathcal{L}$")
+ax.set_xlim(tau_grid.min(), tau_grid.max())
+ax.legend(loc="upper right")
 plt.show()
-print (f"Best estimate {tau_grid[i_best][0]:.2f}")
 ```
 
 :::{.callout-tip}
@@ -980,76 +984,152 @@ In the limit of very small bins, we usually recover the unbinned likelihood.
 :::
 
 
-## Relation of ML and $\chi^2$ 
+## Likelihood and Goodness-of-fit
 
-If the parameters, (measurements) are correlated, in the large sample limit the likelihood function is a n-dimensional Gaussian with covariance $\hat{V}$ and mean $\hat{\vec{\theta}}$:
+* The ML method **does not** give you a goodness-of-fit measure.
+* If the assume *pdf* $f(x;\vec{\theta})$ is wrong and not capable of describing the data, the ML will still find a $\hat{\vec{\theta}}$, even if the fit is terribly wrong
+* The reason for this is that the **absolute scale** of the likelihood function tells us nothing about how good the fit is, we only care for the maximum. 
 
-$$\mathcal{L}(\vec{\theta})= \frac{1}{(2\pi)^{N/2}| \hat{V} |^{1/2}}e^{[-\frac{1}{2}({\vec{\theta}} - \hat{\vec{\theta}})^T \hat{V}^{-1}({\vec{\theta}} - \hat{\vec{\theta}})]}$$
 
-
-## Relation of ML and $\chi^2$ 
-
-The log likelihood becomes:
-$$\ln \mathcal{L}({\vec{\theta}}) = -\frac{1}{2}\sum_{i,j = 1}^N [-\frac{1}{2}({{\theta}_i} - \hat{\theta}_i)^T (\hat{V}^{-1})_{ij}({{\theta}_j} - \hat{\theta}_j)] + {\rm cte}$$
-Which maximizes when we minimize:
-$$ \chi^2(\vec{\theta}) = \sum_{i,j = 1}^N ({{\theta}_i} - \hat{\theta}_i)^T (\hat{V}^{-1})_{ij}({{\theta}_j} - \hat{\theta}_j) $$
-
- 
 ## Relation of ML and $\chi^2$ {.smaller}
-If the covariance is diagonal, ie, the parameters are not correlated:
 
-$$\chi^2(\vec{\theta}) = \sum_{i}^N \frac{({\theta}_i - \hat{\theta}_i)^2}{\hat{\sigma}^2_{\theta_i}} $$
+::::{.columns}
+:::{.column width="40%"}
 
-* The parameters $\hat{\theta}_i$ that minimize this equation are called **Least Squared** (LS) estimators.  
+In the case of fitting a histogram to a model, we can also consider the problem as a series of $\vec{y}$ values (the bin content) related to the $\vec{x}$ varible. If the bin content is large enough we can assume that the errors on $y_i$ are Gaussian. So we can assume that each value is a r.v from a Gaussian distribution with unknown $\mu_i$ but known $\sigma_i$.
 
-*  If $\hat{\theta}_i$ are gaussian distributed, the value of $\chi^2_{min}$ is also a random variable of addition of gaussian numbers which follows the $\chi^2$ distribution, $f_{\chi^2}(\chi^2;n_d)$.
-*  $n_d$ is the degrees of freedom:
-  $$ n_d = \rm{number\; of\; point} - \rm{number\; of\; fitted\;parameters} $$
+:::{.callout-note title="Example"}
+In the example on the right, we take the scattering angle data and plot it as $y$ vs $x$ plot, assuming the error of each bin is given by $\sqrt{y}$.
+:::
+
+:::
+:::{.column width="60%"}
+
+```{python}
+#| echo: true
+fig, ax = plt.subplots(figsize=(7,3))
+hist, bin_edges = np.histogram(data_angles)
+bincenters = bin_edges[:-1] + np.diff(bin_edges)/2
+ax.errorbar(bincenters, hist, 2*np.sqrt(hist), 
+    label="Data",fmt='o', ms = 10, markeredgecolor="white")
+ax.set_xlim(-1,1)
+ax.set_ylim(0,200)
+ax.set_xlabel(r"$\cos(\theta)$")
+ax.set_ylabel(r"content")
+
+```
+:::
+::::
+
+
+
+## Relation of ML and $\chi^2$ {.smaller}
+
+
+The $N$ measurements of $y_i$ can be equivelent regarded as a single measurement where the r.v. $\vec{y}$ follows a N-dimensional Gaussian. 
+
+$$ g(\vec{y};\vec{\lambda},\vec{\sigma}) = \prod_{i=1}^N\frac{1}{2\pi\sigma_i}\exp\left(\frac{-(y_i - \lambda_i)^2}{2\sigma_i^2}\right)$$
+
+In this case we have $N$ true values $\vec{\lambda}$, however consider the case in which we want to fit a function, so the true values are given as a fucntion of $x$, $\lambda(x;\vec{\theta})$.
+
+:::{.callout-note title="Example"}
+In our previous example of the scattering angle, the function was given by:
+
+$$ \lambda(x;\alpha, \beta) = \frac{1 + \alpha x + \beta x^2}{2 + 2\beta/3}$$
+
+where in this case $\vec{\theta} = (\alpha, \beta)$.
+:::
+
+## Relation of ML and $\chi^2$ {.smaller}
+
+The log-likelihood then becomes (ignoring factors that do not depend on $\vec{\theta}$):
+$$\ln \mathcal{L}({\vec{\theta}}) = -\frac{1}{2}\sum_{i = 1}^N \frac{(y_i - \lambda(x_i;\vec{\theta}))^2}{\sigma_i^2}$$
+
+This is maximized by finding the parameters $\vec{\theta}$ that minimize the quantity
+
+$$\chi^2(\vec{\theta}) = \sum_{i = 1}^N \frac{(y_i - \lambda(x_i;\vec{\theta}))^2}{\sigma_i^2} $$
+
+:::{.callout-important title="Least Squared"}
+Note that this the chi-squared function and the parameters $\hat{\theta}_i$ that minimize this function are called **Least Squared** (LS) estimators.  
+:::
+
+
+## Relation of ML and $\chi^2$ 
+
+If the parameters are correlated, ie, and the covariance matrix is known, the exponent becomes:
+
+$$\chi^2(\vec{\theta}) = \sum_{i,j=1}^N (y_i - \lambda(x_i;\vec{\theta}))^2 (V^{-1})_{i,j} (y_j - \lambda(x_j;\vec{\theta}))^2$$
+
+:::{.callout-note title="Least Squared"}
+The parameters $\hat{\theta}_i$ that minimize this equation are called **Least Squared** (LS) estimators.  
+::: 
+
+
+## Relation of ML and $\chi^2${.smaller}
+
+One can apply the least square method to any function $\lambda(x;\vec{\theta})$ but it has interesting properties when the function is linear combination of the parameters $\vec{\theta}$.
+
+$$\lambda(x;\vec{\theta}) = \sum_{j=1}^m a_j(x)\theta_j$$
+
+## Relation of ML and $\chi^2${.smaller}
+
+It can be shown that if:
+
+1. the $y_i$ are independent Gaussian r.v.
+2. the hypothesis  $\lambda(x;\vec{\theta})$ is linear in the parameters $\vec{\theta}$
+3. the functional form of the hypothesis is correct
+
+Then the minimum value of $\chi^2$ is distributed with tje $\chi^2$ distribution, $f_{\chi^2}(x;k)$, with $k$ degres of freedom defined as:
+
+$$f_{\chi^2}(x; k) = \begin{cases} \frac{1}{2^{k/2}\Gamma(k/2)} x^{k/2 - 1} e^{-x/2} & \text{for } x \geq 0 \\ 0 & \text{otherwise} \end{cases}$$ 
 
  
+::: {.callout-note}
+The degrees of freedom, $k$ is defined as $k$ = *number of points - number of fitted parameters*
+:::
+ 
 
-## LS and Goodness-of-fit {.smaller}
+## Goodness-of-Fit {.smaller}
 
-The expected value of $\chi^2$ under $f_{\chi^2}(\chi^2,n_d)$ is $n_d$. So if $\chi^2_{min} \approx n_d$ we say the fit is good. More correctly we need to calculate the $p$-value:
+The expected value of $\chi^2$ under $f_{\chi^2}(x;k)$ is $k$.
+$$ E[\chi^2] = k$$ 
+So if $\chi^2_{min} \approx k$ we say the fit is good. More correctly to assess the goodness-of-fit we can calculate the $p$-value as:
 
-  $$ p = \int_{\chi^2_{min}}^{\infty}f_{\chi^2}(t;n_d){\rm d}t$$
+  $$ p = \int_{\chi^2_{min}}^{\infty}f_{\chi^2}(x;k){\rm d}x$$
 
 This is the probability of obtaining a $\chi^2_{min}$ as high as the one we got, or higher, if the hypothesis is correct.
 
-## LS and Goodness-of-fit
 
-Let's imagine we observe $\chi^2 = 5$ and we had 4 degrees of freedom in our estimation 
-  
+## Goodness-of-Fit {.smaller}
+
+Let's imagine you obtained a $\chi^2_{min} = 2.4$ and the degrees of freedom is $k=4$
+
 ```{python}
 from scipy.stats import chi2
 df = 4
 ch = chi2(df)
 
-fig, ax = plt.subplots(figsize=(10, 5))
+fig, ax = plt.subplots(figsize=(10, 4))
 # for distribution curve
 x= np.arange(0, 20,0.001)
 ax.plot(x, ch.pdf(x))
 
-#ax.set_xlabel(r'$\hat{\theta}$', fontsize=15)
-#ax.set_ylabel(r'$g(\hat{\theta};\theta)$', fontsize=15)
+
 ax.grid(True)
 
 # for fill_between
-pb=np.arange(5,20,0.01)
+pb=np.arange(2.4,20,0.01)
 
 ax.set_ylim(0,0.2)
-ax.fill_between(pb,ch.pdf(pb),alpha=0.5, color='g')
+ax.fill_between(pb,ch.pdf(pb),alpha=0.5, color='g', label=f"$p$-value = {ch.sf(2.4):.2f}")
 
-# for text
-#ax.text(-1.5,0.05,r"$\frac{\gamma}{2}$", fontsize=20)
-#ax.text(1.2,0.05,r"$\frac{\gamma}{2}$", fontsize=20)
-#ax.text(-2,0.4,r"$\Phi^{-1}(\gamma/2)$", fontsize=15)
-#ax.text(1,0.4,r"$\Phi^{-1}(1 - \gamma/2)$", fontsize=15)
 
-ax.vlines(x = 5,ymin=0, ymax=ch.pdf(5), color="black", linestyle="--")
+ax.vlines(x = 2.4,ymin=0, ymax=ch.pdf(2.4), color="black", linestyle="--")
 ax.set_xlabel(r"$\chi^2$")
 ax.set_ylabel(r"$f_{\chi^2}$")
+ax.legend()
 plt.show()
+
 ``` 
 
 
